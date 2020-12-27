@@ -1,16 +1,41 @@
-# This is a sample Python script.
+def read_from_file(filename: str):
+    #perskaitom abeceles dydi
+    try:
+        with open(filename, mode='rb') as input_stream:  # reading characters from file
+            size_of_alphabet = int.from_bytes(input_stream.read(1), "big") #IRGI GALI NETILPT
+            alphabet = {}
+            num = 1
+            for byte in input_stream.read(size_of_alphabet):
+                alphabet.update({'{:08b}'.format(ord(byte)): num}) #GAL GERIAU APKEIST VIETOM
+                num += 1
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+            entryList = []
+            while True:
+                dataByte = input_stream.read(1)
+                if not dataByte:
+                    break
+                entryList.append(int.from_bytes(dataByte, "big"))  # CIA CRASHINS SU DIDELIAIS FAILAIS
+
+            return alphabet, entryList
+
+    except OSError:
+        print("Failas nerastas.")
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def decode(alphabet: dict, entryList: list) -> str:
+    text = ""
+    firstLetter = alphabet.get(entryList[0]) #nu tikrai negerai lol
+    alphabet.update({firstLetter: 0})
+    for entry in entryList:
+        # TINGIU TOLIAU DARYT
 
 
-# Press the green button in the gutter to run the script.
+
+
+def decoder(comprfile: str):
+    alphabet, entryList = read_from_file(comprfile)
+    decode(alphabet, entryList)
+
+
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    decoder("mhm.txt")
