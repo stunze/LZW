@@ -1,39 +1,65 @@
 def read_from_file(filename: str):
-    #perskaitom abeceles dydi
+    # perskaitom abeceles dydi
     try:
         with open(filename, mode='rb') as input_stream:  # reading characters from file
-            size_of_alphabet = int.from_bytes(input_stream.read(1), "big") #IRGI GALI NETILPT
-            alphabet = {}
-            num = 1
-            for byte in input_stream.read(size_of_alphabet):
-                alphabet.update({'{:08b}'.format(ord(byte)): num}) #GAL GERIAU APKEIST VIETOM
-                num += 1
 
+            entryNum = int.from_bytes(input_stream.read(1), "big")
             entryList = []
-            while True:
-                dataByte = input_stream.read(1)
-                if not dataByte:
-                    break
-                entryList.append(int.from_bytes(dataByte, "big"))  # CIA CRASHINS SU DIDELIAIS FAILAIS
+            for byte in input_stream.read(2**entryNum):
+                entryList.append(int.from_bytes(byte, "big"))
 
-            return alphabet, entryList
+            return entryList
 
     except OSError:
         print("Failas nerastas.")
 
 
+def write_to_file(outputFile: str, text: str):
+    try:
+        with open(outputFile, "wb") as output_stream:
+            output_stream.write(text)
+        return True
+    except OSError:
+        print("Failas nerastas")
+    return False
+
+
 def decode(alphabet: dict, entryList: list) -> str:
     text = ""
-    firstLetter = alphabet.get(entryList[0]) #nu tikrai negerai lol
-    alphabet.update({firstLetter: 0})
+    newWord = ""
+    previousEntry = -1
+
     for entry in entryList:
-        # TINGIU TOLIAU DARYT
+
+        # print(text)
+        if previousEntry > -1:
+            if entry != len(alphabet):
+                newWord += alphabet[previousEntry] + alphabet[entry][0]
+            else:
+                newWord += alphabet[previousEntry] + alphabet[previousEntry][0]
+            # print(newWord)
+            alphabet.update({len(alphabet): newWord})
+            # print(alphabet)
+            newWord = ""
+
+        text += alphabet[entry]
+        previousEntry = entry
+
+    return text
 
 
+def build_table() -> dict:
+    alphabet = {}
+    for i in range(0, 256):
+        alphabet.update({i: chr(i)})
+
+    return alphabet
 
 
 def decoder(comprfile: str):
-    alphabet, entryList = read_from_file(comprfile)
+    # entryList = read_from_file(comprfile)
+    entryList = [97, 98, 98, 256, 259, 99]
+    alphabet = build_table()
     decode(alphabet, entryList)
 
 
