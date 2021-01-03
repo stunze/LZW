@@ -36,9 +36,9 @@ def encoded_to_file(filename: str, encoded):
 
 
 def encoder(filename_in: str, filename_out: str):
-        dictionary = init_dictionary()
+    dictionary = init_dictionary()
     code = ""
-    encoded = ""
+    encoded = bytearray()
 
     for byte in bytes_from_file(filename_in):
         #     if not (check_dictionary(dictionary, code)):
@@ -51,11 +51,11 @@ def encoder(filename_in: str, filename_out: str):
         else:
             root = code[:-8]
             entry = dictionary[root]
-            encoded += format(entry, 'b')
+            encoded += entry.to_bytes(3, byteorder='big')
             dictionary.update({code: len(dictionary)})
             code = code[-8:]
 
-    encoded += format(dictionary[code], 'b')
+    encoded += dictionary[code].to_bytes(3, byteorder='big')
     encoded_to_file(filename_out, encoded)
 
 def read_from_file(filename: str):
