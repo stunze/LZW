@@ -1,8 +1,11 @@
 MAX_DICT_SIZE = 4096
+from bitarray import bitarray
 
 def init_dictionary():
-    return {format(i, "08b"): i for i in range(256)}
-
+    alphabet = {}
+    for i in range(0, 256):
+        alphabet.update({format(i, "08b"):i})
+    return  alphabet
 
 def check_dictionary(dictionary: dict, element: str):  # reik nepamirst daugiau checku uzdet
     if len(dictionary) < MAX_DICT_SIZE:
@@ -33,20 +36,25 @@ def encoder(filename_in: str, filename_out: str):
     dictionary = init_dictionary()
     code = ""
     encoded = bytearray()
+    entry = []
 
     for byte in bytes_from_file(filename_in):
         # if not (check_dictionary(dictionary, code)):
         #     break
-        if len(code) < 1:
-            code += '{:08b}'.format(ord(byte))
+        code += '{:08b}'.format(ord(byte))
+        if len(code) < 16:
+            pass
         elif code in dictionary.keys():
-            value = find_in_dictionary(dictionary, code)
-            code += '{:08b}'.format(ord(byte))
+            pass
         else:
-            encoded += value.to_bytes(2, byteorder='big')
+            root = code[:-8]
+            entry = dictionary[root]
+            encoded += entry.to_bytes(4, byteorder='big')
             dictionary.update({code: len(dictionary)})
-            code = ""
-    print(encoded)
+            code = code[-8:]
+
+    encoded += dictionary[code].to_bytes(4, byteorder='big')
+    # print(text)
     encoded_to_file(filename_out, encoded)
 
 def read_from_file(filename: str):
@@ -54,11 +62,12 @@ def read_from_file(filename: str):
     try:
         with open(filename, mode='rb') as input_stream:  # reading characters from file
 
-            entryNum = int.from_bytes(input_stream.read(1), "big")
             entryList = []
-            for byte in input_stream.read(2**entryNum):
-                entryList.append(int.from_bytes(byte, "big"))
-
+            while True:
+                dataByte = input_stream.read(4)
+                if not dataByte:
+                    break
+                entryList.append(int.from_bytes(dataByte, "big"))
             return entryList
 
     except OSError:
@@ -68,7 +77,7 @@ def read_from_file(filename: str):
 def write_to_file(outputFile: str, text: str):
     try:
         with open(outputFile, "wb") as output_stream:
-            output_stream.write(text)
+            bitarray(text).tofile(output_stream)
         return True
     except OSError:
         print("Failas nerastas")
@@ -85,9 +94,9 @@ def decode(alphabet: dict, entryList: list) -> str:
         # print(text)
         if previousEntry > -1:
             if entry != len(alphabet):
-                newWord += alphabet[previousEntry] + alphabet[entry][0]
+                newWord += alphabet[previousEntry] + alphabet[entry][0:8]
             else:
-                newWord += alphabet[previousEntry] + alphabet[previousEntry][0]
+                newWord += alphabet[previousEntry] + alphabet[previousEntry][0:8]
             # print(newWord)
             alphabet.update({len(alphabet): newWord})
             # print(alphabet)
@@ -102,17 +111,19 @@ def decode(alphabet: dict, entryList: list) -> str:
 def build_table() -> dict:
     alphabet = {}
     for i in range(0, 256):
-        alphabet.update({i: chr(i)})
+        alphabet.update({i: format(i, "08b")})
 
     return alphabet
 
 
-def decoder(comprfile: str):
-    # entryList = read_from_file(comprfile)
-    entryList = [97, 98, 98, 256, 259, 99]
+def decoder(comprfile: str, decomprfile: str):
+    entryList = read_from_file(comprfile)
     alphabet = build_table()
-    decode(alphabet, entryList)
+    decoded_text = decode(alphabet, entryList)
+    write_to_file(decomprfile, decoded_text)
+
 
 
 if __name__ == '__main__':
-    decoder("mhm.txt")
+    #encoder("test.txt", "temp.lzw")
+    decoder("temp2.lzw", "flowers2.bmp")
