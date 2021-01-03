@@ -33,14 +33,13 @@ def encoded_to_file(filename: str, encoded):
 
 
 def encoder(filename_in: str, filename_out: str):
-    dictionary = init_dictionary()
+        dictionary = init_dictionary()
     code = ""
-    encoded = bytearray()
-    entry = []
+    encoded = ""
 
     for byte in bytes_from_file(filename_in):
-        # if not (check_dictionary(dictionary, code)):
-        #     break
+        #     if not (check_dictionary(dictionary, code)):
+        #         break
         code += '{:08b}'.format(ord(byte))
         if len(code) < 16:
             pass
@@ -49,12 +48,11 @@ def encoder(filename_in: str, filename_out: str):
         else:
             root = code[:-8]
             entry = dictionary[root]
-            encoded += entry.to_bytes(4, byteorder='big')
+            encoded += format(entry, 'b')
             dictionary.update({code: len(dictionary)})
             code = code[-8:]
 
-    encoded += dictionary[code].to_bytes(4, byteorder='big')
-    # print(text)
+    encoded += format(dictionary[code], 'b')
     encoded_to_file(filename_out, encoded)
 
 def read_from_file(filename: str):
