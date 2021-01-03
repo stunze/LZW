@@ -1,5 +1,8 @@
 MAX_DICT_SIZE = 4096
 from bitarray import bitarray
+import argparse
+import time
+
 
 def init_dictionary():
     alphabet = {}
@@ -123,5 +126,7 @@ def decoder(comprfile: str, decomprfile: str):
 
 
 if __name__ == '__main__':
-    #encoder("test.txt", "temp.lzw")
-    decoder("temp2.lzw", "flowers2.bmp")
+    start_time = time.time()
+    encoder("test.txt", "temp.lzw")
+    print("--- %s seconds ---" % (time.time() - start_time))
+    # decoder("temp2.lzw", "flowers2.bmp")
