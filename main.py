@@ -62,6 +62,7 @@ class LZW_Coding:
         self.keys = ASCII_TO_INT.copy()  # key = bytes
         self.reverse_lzw_mapping = INT_TO_ASCII.copy()  # key = dictionary length
         self.n_keys = len(ASCII_TO_INT)  # length of dictionary
+        self.rev_keys = len(INT_TO_ASCII)
 
     def lzw_compress(self):
         """
@@ -79,15 +80,15 @@ class LZW_Coding:
             string = b''
             for symbol in data:
                 string_plus_symbol = string + symbol.to_bytes(1, 'big')  # get input symbol and add to previous string
-                if string_plus_symbol in self.keys:  # if we already have new string
+                if string_plus_symbol in self.keys:  # if we already have new string of bytes
                     string = string_plus_symbol  # update string
+
                 else:
                     compressed.append(self.keys[string])  # to compressed list add key[string]
                     self.keys[string_plus_symbol] = self.n_keys  # update dictionary key[new_string]
-                    self.reverse_lzw_mapping[self.n_keys] = string_plus_symbol  # and also update reverse dictionary
+                    # self.reverse_lzw_mapping[self.n_keys] = string_plus_symbol  # and also update reverse dictionary
                     self.n_keys += 1  # update dictionary size
                     string = symbol.to_bytes(1, 'big')  # new string in bytes
-
             if string in self.keys:  # for last string
                 compressed.append(self.keys[string])
             self.n_bits = len(bin(self.n_keys)[2:])  # how many bits to write to file for one symbol
@@ -119,21 +120,30 @@ class LZW_Coding:
 
             encoded_text = remove_padding(padded_encoded_text)  # without
 
-            decoded_text = []
+            decoded_text = b''
+            previous = b''
             start = 0
             while start < len(encoded_text):
                 code = encoded_text[start:start + self.n_bits]  # reading n_bits at the time
                 key = int(code, 2)  # convert to code
-                decoded_text.append(self.reverse_lzw_mapping[key])  # finding it in reverse dictionary and updating text
+                if key != self.rev_keys:
+                    if key in self.reverse_lzw_mapping:
+                        decoded_text += self.reverse_lzw_mapping[key]  # finding it in reverse dictionary and updating cia gerai
+                        previous += self.reverse_lzw_mapping[key]
+                    else:
+                        self.reverse_lzw_mapping[self.rev_keys] = previous
+                        self.rev_keys += 1
+                        previous = b''
+
                 start += self.n_bits  # skip n_bits
-            output.write(b''.join(decoded_text))  # write to file
+#            bits: str = ''.join([bin(i)[2:].zfill(self.n_bits) for i in decoded_text])  # to bits
+            output.write(decoded_text)  # write to file
             print("LZW Decompressed")
             return output_path
 
 
-path = 'big_bmp.bmp'  # file to encode
-decoded_file = 'big_bmp_decoded.bmp'  # file to decode
-
+path = 'img.jpg'  # file to encode
+decoded_file = 'img_dec.jpg'  # file to decode
 
 lzw = LZW_Coding(path=path)
 
