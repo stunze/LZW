@@ -86,7 +86,6 @@ class LZW_Coding:
                 else:
                     compressed.append(self.keys[string])  # to compressed list add key[string]
                     self.keys[string_plus_symbol] = self.n_keys  # update dictionary key[new_string]
-                    # self.reverse_lzw_mapping[self.n_keys] = string_plus_symbol  # and also update reverse dictionary
                     self.n_keys += 1  # update dictionary size
                     string = symbol.to_bytes(1, 'big')  # new string in bytes
             if string in self.keys:  # for last string
@@ -121,22 +120,25 @@ class LZW_Coding:
             encoded_text = remove_padding(padded_encoded_text)  # without
 
             decoded_text = b''
-            previous = b''
+            word = b''
+            previous = -1
             start = 0
             while start < len(encoded_text):
                 code = encoded_text[start:start + self.n_bits]  # reading n_bits at the time
                 key = int(code, 2)  # convert to code
-                if key != self.rev_keys:
-                    if key in self.reverse_lzw_mapping:
-                        decoded_text += self.reverse_lzw_mapping[key]  # finding it in reverse dictionary and updating cia gerai
-                        previous += self.reverse_lzw_mapping[key]
+                if previous > -1:
+                    if key != self.rev_keys:
+                        word += self.reverse_lzw_mapping[previous] + self.reverse_lzw_mapping[key][0:8]
                     else:
-                        self.reverse_lzw_mapping[self.rev_keys] = previous
-                        self.rev_keys += 1
-                        previous = b''
-
+                        word += self.reverse_lzw_mapping[previous] + self.reverse_lzw_mapping[previous][0:8]
+                    self.reverse_lzw_mapping[self.rev_keys] = word
+                    self.rev_keys += 1
+                previous = key
+                decoded_text += self.reverse_lzw_mapping[key]
+                word = b''
                 start += self.n_bits  # skip n_bits
-#            bits: str = ''.join([bin(i)[2:].zfill(self.n_bits) for i in decoded_text])  # to bits
+            print(self.n_keys)
+            print(self.rev_keys)
             output.write(decoded_text)  # write to file
             print("LZW Decompressed")
             return output_path
