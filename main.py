@@ -1,60 +1,10 @@
-import math
 import os
 import time
+from bitarray._bitarray import bitarray
+import commons
 
 ASCII_TO_INT: dict = {i.to_bytes(1, 'big'): i for i in range(256)}  # for encoding
 INT_TO_ASCII: dict = {i: b for b, i in ASCII_TO_INT.items()}  # for decoding
-
-
-def pad_encoded_text(encoded_text):
-    """
-    padding the encoded text to bytes. if bit string is 14 we need 2 bits padding
-    :param encoded_text: the encoded text without padding
-    :return: padded encoded text
-    """
-    padding = 8 - len(encoded_text) % 8
-    for i in range(padding):
-        encoded_text += "0"
-
-    padded_info = "{0:08b}".format(padding)
-    encoded_text = padded_info + encoded_text
-    return encoded_text
-
-
-def remove_padding(padded_encoded_text):
-    """
-    removing the extra padded bits from encoded_text
-    :param padded_encoded_text: encoded string in bits
-    :return: encoded text without padding
-    """
-    padded_text = padded_encoded_text[:8]
-    padding = int(padded_text, 2)
-
-    padded_encoded_text = padded_encoded_text[8:]
-    encoded_text = padded_encoded_text[:-1 * padding]
-
-    return encoded_text
-
-
-def get_byte_array(padded_encoded_text):
-    """
-    creating bytes array from bits string
-    :param padded_encoded_text: string of bits
-    :return: bytearray()
-    """
-    if len(padded_encoded_text) % 8 != 0:
-        print("Encoded text not padded properly")
-        exit(0)
-
-    b = bytearray()
-    for i in range(0, len(padded_encoded_text), 8):
-        byte = padded_encoded_text[i:i + 8]
-        b.append(int(byte, 2))
-    return b
-
-
-def number_of_bits(k):
-    return int(math.log2(256+k)+1)
 
 
 class LZW_Coding:
@@ -73,20 +23,18 @@ class LZW_Coding:
 
     def lzw_compress(self):
         """
-        compress the file located in self.path using lzw.
-        :return: output_path. saving the compressed data into filename + ".lzw"
-        """
+                compress the file located in self.path using lzw.
+                :return: output_path. saving the compressed data into filename + ".lzw"
+                """
 
         filename, file_extension = os.path.splitext(self.path)
         output_path = filename + ".lzw"
-        bitsNum = number_of_bits(self.dict_max_size)
         with open(self.path, 'rb') as file, open(output_path, 'wb') as output:
             data = file.read()
 
             compressed: list = []
             string = b''
             for symbol in data:
-
                 string_plus_symbol = string + symbol.to_bytes(1, 'big')  # get input symbol and add to previous string
                 if self.n_keys == self.dict_max_size:
                     if string_plus_symbol in self.keys:  # if we already have new string of bytes
@@ -106,8 +54,8 @@ class LZW_Coding:
                 compressed.append(self.keys[string])
             self.n_bits = len(bin(self.n_keys)[2:])  # how many bits to write to file for one symbol
             bits: str = ''.join([bin(i)[2:].zfill(self.n_bits) for i in compressed])  # to bits
-            padded_text = pad_encoded_text(encoded_text=bits)  # add padding for decoding in bytes
-            b = get_byte_array(padded_encoded_text=padded_text)  # padding size and encoded text
+            padded_text = commons.pad_encoded_text(encoded_text=bits)  # add padding for decoding in bytes
+            b = commons.get_byte_array(padded_encoded_text=padded_text)  # padding size and encoded text
             output.write(b)
         print("LZW Compressed")
         return output_path
@@ -118,60 +66,49 @@ class LZW_Coding:
         :param input_path: the file to decompress using lzw
         :return: output_path. file decompressed saved to filename + "_decompressed" + ".bmp"
         """
-
         with open(input_path, 'rb') as file, open(output_path, 'wb') as output:
-            bit_string_list = []
-
-            byte = file.read(1)
-            while len(byte) > 0:
-                byte = ord(byte)
-                bits = bin(byte)[2:].rjust(8, '0')
-                bit_string_list.append(bits)  # bytes and converting to bit string
-                byte = file.read(1)
-
-            padded_encoded_text = ''.join(bit_string_list)  # list with padding
-
-            encoded_text = remove_padding(padded_encoded_text)  # without
-
+            tempBuffer = bitarray()
             decoded_text = b''
             word = b''
             previous = -1
-            start = 0
-            while start < len(encoded_text):
-                code = encoded_text[start:start + self.n_bits]  # reading n_bits at the time
-                key = int(code, 2)  # convert to code
-                if self.rev_keys == self.dict_max_size:
-                    if previous > -1:
+            encoded_text = ""
+            padding = int.from_bytes(file.read(1), byteorder="big", signed=False)
+            tempBuffer.fromfile(file, 1)
+            del tempBuffer[:padding]
+            scanned_bytes = commons.yield_bytes_from_stream(file)
+            for chunk in scanned_bytes:
+                tempBuffer.frombytes(chunk)
+                encoded_text += tempBuffer.to01()
+                del tempBuffer[:]
+                while len(encoded_text) >= self.n_bits:
+                    code = encoded_text[0:self.n_bits]  # reading n_bits at the time
+                    key = int(code, 2)  # convert to code
+                    if previous == -1:
+                        previous = int(code, 2)
+                    elif self.rev_keys == self.dict_max_size:
                         if key != self.rev_keys:
                             word += self.reverse_lzw_mapping[previous] + self.reverse_lzw_mapping[key][0:1]
                         else:
                             word += self.reverse_lzw_mapping[previous] + self.reverse_lzw_mapping[previous][0:1]
-                    previous = key
-                    decoded_text += self.reverse_lzw_mapping[key]
-                    word = b''
-                    start += self.n_bits  # skip n_bits
-                else:
-                    if previous > -1:
+                        previous = key
+                    else:
                         if key != self.rev_keys:
                             word += self.reverse_lzw_mapping[previous] + self.reverse_lzw_mapping[key][0:1]
                         else:
                             word += self.reverse_lzw_mapping[previous] + self.reverse_lzw_mapping[previous][0:1]
                         self.reverse_lzw_mapping[self.rev_keys] = word
                         self.rev_keys += 1
-                    previous = key
+                        previous = key
                     decoded_text += self.reverse_lzw_mapping[key]
                     word = b''
-                    start += self.n_bits  # skip n_bits
-            print(self.n_keys)
-            print(self.rev_keys)
+                    encoded_text = encoded_text[self.n_bits:]  # skip n_bits
             output.write(decoded_text)  # write to file
             print("LZW Decompressed")
-            return output_path
 
 
-path = 'img.jpg'  # file to encode
-decoded_file = 'img_dec.jpg'  # file to decode
-dict_max_size = 500
+path = 'big_bmp.bmp'  # file to encode
+decoded_file = 'big_bmp_decoded.bmp'  # file to decode
+dict_max_size = 32768
 lzw = LZW_Coding(path=path, dict_max_size=dict_max_size)
 
 start_time = time.time()
@@ -184,7 +121,7 @@ print(f"--- {time.time() - start_time:.3f} seconds ---")
 print()
 
 start_time = time.time()
-output_path = lzw.lzw_decompress(encoded_path, decoded_file)  # blogas
+lzw.lzw_decompress(encoded_path, decoded_file)  # blogas
 print(f'Decompressed to {decoded_file}')
 print(f'Before compress:     {os.path.getsize(path)}')
 print(f'After Decompressed:  {os.path.getsize(decoded_file)}')
