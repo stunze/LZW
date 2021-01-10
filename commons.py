@@ -1,5 +1,5 @@
 import math
-chunk_size = 1000
+chunk_size = 1024
 
 
 def pad_encoded_text(encoded_text):
