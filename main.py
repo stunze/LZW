@@ -69,7 +69,7 @@ class LZW_Coding:
         """
         with open(input_path, 'rb') as file, open(output_path, 'wb') as output:
             tempBuffer = bitarray()
-            decoded_text = b''
+            decoded_text = bytearray()
             previous = -1
             encoded_text = ""
             padding = int.from_bytes(file.read(1), byteorder="big", signed=False)
@@ -80,7 +80,6 @@ class LZW_Coding:
                 tempBuffer.frombytes(chunk)
                 encoded_text += tempBuffer.to01()
                 del tempBuffer[:]
-                start_time = time.time()
                 while len(encoded_text) >= self.n_bits:
                     code = encoded_text[0:self.n_bits]  # reading n_bits at the time
                     key = int(code, 2)  # convert to code
@@ -94,17 +93,14 @@ class LZW_Coding:
                         self.reverse_lzw_mapping[self.rev_keys] = word
                         self.rev_keys += 1
                         previous = key
-                    decoded_text += self.reverse_lzw_mapping[key]
+                    decoded_text.extend(self.reverse_lzw_mapping[key])
                     encoded_text = encoded_text[self.n_bits:]  # skip n_bits
-                print(f"--- {time.time() - start_time:.3f} seconds ---")
-            if key in self.keys:  # for last string
-                decoded_text += self.reverse_lzw_mapping[key]
             output.write(decoded_text)  # write to file
             print("LZW Decompressed")
 
 
-path = 'flowers.bmp'  # file to encode
-decoded_file = 'flowers_dec.bmp'  # file to decode
+path = 'big_bmp.bmp'  # file to encode
+decoded_file = 'big_bmp_dec.bmp'  # file to decode
 dict_max_size = 1024
 lzw = LZW_Coding(path=path, dict_max_size=dict_max_size)
 
