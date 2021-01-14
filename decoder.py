@@ -8,17 +8,15 @@ INT_TO_ASCII: dict = {i: b for b, i in ASCII_TO_INT.items()}  # for decoding
 
 class LZWDecoding:
 
-    def __init__(self, path, dict_max_size, n_bits):
+    def __init__(self, path, param):
         """
         :param path: file path to compress
-        :param dict_max_size: max dictionary size
-        :param n_bits: in how many bits all the codes are written
+        :param param: max dictionary size
         """
         self.path = path
-        self.n_bits = n_bits  # how many bits to write to file
         self.reverse_lzw_mapping = INT_TO_ASCII.copy()  # key = dictionary length
         self.rev_keys = len(INT_TO_ASCII)
-        self.dict_max_size = dict_max_size
+        self.param = param
 
     def lzw_decompress(self, input_path, output_path):
         """
@@ -39,12 +37,12 @@ class LZWDecoding:
                 tempBuffer.frombytes(chunk)
                 encoded_text += tempBuffer.to01()
                 del tempBuffer[:]
-                while len(encoded_text) >= self.n_bits:
-                    code = encoded_text[0:self.n_bits]  # reading n_bits at the time
+                while len(encoded_text) >= self.param:
+                    code = encoded_text[0:self.param]  # reading n_bits at the time
                     key = int(code, 2)  # convert to code
                     if previous == -1:
                         previous = int(code, 2)
-                    elif self.rev_keys != self.dict_max_size:
+                    elif self.rev_keys != 2**self.param:
                         if key != self.rev_keys:
                             word = self.reverse_lzw_mapping[previous] + self.reverse_lzw_mapping[key][0:1]
                         else:
@@ -53,6 +51,6 @@ class LZWDecoding:
                         self.rev_keys += 1
                         previous = key
                     decoded_text.extend(self.reverse_lzw_mapping[key])
-                    encoded_text = encoded_text[self.n_bits:]  # skip n_bits
+                    encoded_text = encoded_text[self.param:]  # skip n_bits
             output.write(decoded_text)  # write to file
             print("LZW Decompressed")
