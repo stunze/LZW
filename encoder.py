@@ -4,6 +4,42 @@ import commons
 ASCII_TO_INT: dict = {i.to_bytes(1, 'big'): i for i in range(256)}  # for encoding
 
 
+class BitWriter(object):
+    def __init__(self, f):
+        self.accumulator = 0
+        self.bcount = 0
+        self.out = f
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.flush()
+
+    def __del__(self):
+        try:
+            self.flush()
+        except ValueError:  # I/O operation on closed file.
+            pass
+
+    def _writebit(self, bit):
+        if self.bcount == 8:
+            self.flush()
+        if bit > 0:
+            self.accumulator |= 1 << 7 - self.bcount
+        self.bcount += 1
+
+    def writebits(self, bits, n):
+        while n > 0:
+            self._writebit(bits & 1 << n - 1)
+            n -= 1
+
+    def flush(self):
+        self.out.write(bytearray([self.accumulator]))
+        self.accumulator = 0
+        self.bcount = 0
+
+
 class LZWEncoding:
     def __init__(self, path, param):
         """
@@ -20,34 +56,33 @@ class LZWEncoding:
         compress the file located in self.path using lzw.
         :return: output_path. saving the compressed data into filename + ".lzw"
         """
-        print(self.param)
         filename, file_extension = os.path.splitext(self.path)
         output_path = filename + ".lzw"
-        with open(self.path, 'rb') as file, open(output_path, 'wb') as output:
-            data = file.read()
-            compressed: list = []
-            string = b''
-            for symbol in data:
-                string_plus_symbol = string + symbol.to_bytes(1, 'big')  # get input symbol and add to previous string
+        module_name = os.path.splitext(os.path.basename(__file__))[0]
+        bitIO = __import__(module_name)
+        data = commons.yield_from_file(self.path)
+        word = b''
+        with open(output_path, 'wb') as output, bitIO.BitWriter(output) as writer:
+            writer.writebits(self.param, 8)
+            for byte in data:  # needs to be fixed, reading in chunks would be much faster
+                new_word = word + byte
+
                 if self.n_keys == 2**self.param:
-                    if string_plus_symbol in self.keys:  # if we already have new string of bytes
-                        string = string_plus_symbol  # update string
-                    else:
-                        compressed.append(self.keys[string])  # to compressed list add key[string]
-                        string = symbol.to_bytes(1, 'big')  # new string in bytes
+                    self.keys = ASCII_TO_INT.copy()  # key = bytes
+                    self.n_keys = len(ASCII_TO_INT)  # length of dictionary
+
+                if new_word in self.keys:
+                    word = new_word
                 else:
-                    if string_plus_symbol in self.keys:  # if we already have new string of bytes
-                        string = string_plus_symbol  # update string
-                    else:
-                        compressed.append(self.keys[string])  # to compressed list add key[string]
-                        self.keys[string_plus_symbol] = self.n_keys  # update dictionary key[new_string]
-                        self.n_keys += 1  # update dictionary size
-                        string = symbol.to_bytes(1, 'big')  # new string in bytes
-            if string in self.keys:  # for last string
-                compressed.append(self.keys[string])
-            bits: str = ''.join([bin(i)[2:].zfill(self.param) for i in compressed])  # to bits
-            padded_text = commons.pad_encoded_text(encoded_text=bits)  # add padding for decoding in bytes
-            b = commons.get_byte_array(padded_encoded_text=padded_text)  # padding size and encoded text
-            output.write(b)
+                    number_of_bits = commons.number_of_bits(self.n_keys)
+                    writer.writebits(self.keys[word], number_of_bits)
+                    self.keys[new_word] = self.n_keys
+                    self.n_keys += 1
+                    word = byte
+
+            if word in self.keys:  # for last string
+                number_of_bits = commons.number_of_bits(self.n_keys)
+                writer.writebits(self.keys[word], number_of_bits)
+
         print("LZW Compressed")
         return output_path
