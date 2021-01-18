@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     if sys.argv[1] == 'c' and len(sys.argv) == 4 and int(sys.argv[3]) >= 0:
         start_time = time.time()
-        encoding = LZWEncoding(path=sys.argv[2], param=sys.argv[3])
+        encoding = LZWEncoding(path=sys.argv[2], param=int(sys.argv[3]))
         encoded_path = encoding.lzw_compress()
         print(f'Compressed to {encoded_path}')
         print(f'Before compress: {os.path.getsize(sys.argv[2])}')
