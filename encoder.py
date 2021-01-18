@@ -64,21 +64,22 @@ class LZWEncoding:
         word = b''
         with open(output_path, 'wb') as output, bitIO.BitWriter(output) as writer:
             writer.writebits(self.param, 8)
-            for byte in data:  # needs to be fixed, reading in chunks would be much faster
-                new_word = word + byte
+            for chunk in data:
+                for byte in chunk:
+                    new_word = word + byte.to_bytes(1, byteorder='big')
 
-                if self.n_keys == 2**self.param:
-                    self.keys = ASCII_TO_INT.copy()  # key = bytes
-                    self.n_keys = len(ASCII_TO_INT)  # length of dictionary
+                    if self.n_keys == 2**self.param:
+                        self.keys = ASCII_TO_INT.copy()  # key = bytes
+                        self.n_keys = len(ASCII_TO_INT)  # length of dictionary
 
-                if new_word in self.keys:
-                    word = new_word
-                else:
-                    number_of_bits = commons.number_of_bits(self.n_keys)
-                    writer.writebits(self.keys[word], number_of_bits)
-                    self.keys[new_word] = self.n_keys
-                    self.n_keys += 1
-                    word = byte
+                    if new_word in self.keys:
+                        word = new_word
+                    else:
+                        number_of_bits = commons.number_of_bits(self.n_keys)
+                        writer.writebits(self.keys[word], number_of_bits)
+                        self.keys[new_word] = self.n_keys
+                        self.n_keys += 1
+                        word = byte.to_bytes(1, byteorder='big')
 
             if word in self.keys:  # for last string
                 number_of_bits = commons.number_of_bits(self.n_keys)
