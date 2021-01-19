@@ -14,12 +14,11 @@ if __name__ == "__main__":
         print(f'Before compress: {os.path.getsize(sys.argv[2])}')
         print(f'After compress:  {os.path.getsize(encoded_path)}')
         print(f"--- {time.time() - start_time:.3f} seconds ---")
-    elif sys.argv[1] == 'd' and len(sys.argv) == 4:
+    elif sys.argv[1] == 'd' and len(sys.argv) == 3:
         start_time = time.time()
-        encoded_path = sys.argv[2]
-        decoded_file = sys.argv[3]
-        decoding = LZWDecoding()
-        decoding.lzw_decompress(encoded_path, decoded_file)
+        decoded_file = sys.argv[2]
+        decoding = LZWDecoding(encoded_path=encoded_path)
+        decoding.lzw_decompress(decoded_file)
         print(f'Decompressed to {decoded_file}')
         print(f'Before decompress:     {os.path.getsize(encoded_path)}')
         print(f'After Decompressed:  {os.path.getsize(decoded_file)}')
