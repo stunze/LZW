@@ -1,0 +1,91 @@
+test.txt:
+Dydis: 244KB
+	Parameteras: 10
+--------------------------------
+	Uzkoduota per: 0.759 s
+	Dekoduota per: 1.854 s
+	Dydis po kompresijos: 206KB
+
+    	Parameteras: 16
+--------------------------------
+	Uzkoduota per: 0.557 s
+	Dekoduota per: 1.138 s
+	Dydis po: 136KB
+
+	Parameteras: 6
+--------------------------------
+	Uzkoduota per: 1.136 s
+	Dekoduota per: 2.210 s
+	Dydis po: 242KB
+
+	Parameteras: 2
+--------------------------------
+	Uzkoduota per: 3.379 s
+	Dekoduota per: 2.788 s
+	Dydis po: 293KB
+
+black.bmp:
+Dydis: 3260KB
+
+	Parameteras: 5
+--------------------------------
+	Uzkoduota per: 17.198 s
+	Dekoduota per: 6.789 s
+	Dydis po kompresijos: 653KB
+
+	Parameteras: 8
+--------------------------------
+	Uzkoduota per: 10.727 s
+	Dekoduota per: 4.621 s
+	Dydis po kompresijos: 408KB
+
+	Parameteras: 11
+--------------------------------
+	Uzkoduota per: 8.202 s
+	Dekoduota per: 3.434 s
+	Dydis po kompresijos: 297KB
+
+	Parameteras: 2
+--------------------------------
+	Uzkoduota per: 41.808 s
+	Dekoduota per: 16.657 s
+	Dydis po kompresijos: 1630KB
+
+flowers.bmp:
+Dydis: 5000KB
+
+	Parameteras: 2
+--------------------------------
+	Uzkoduota per: 59.479 s
+	Dekoduota per: 41.431 s
+	Dydis po kompresijos: 4305KB
+
+	Parameteras: 6
+--------------------------------
+	Uzkoduota per: 23.092 s
+	Dekoduota per: 39.754 s
+	Dydis po kompresijos: 2614KB
+
+	Parameteras: 13
+--------------------------------
+	Uzkoduota per: 12.081 s
+	Dekoduota per: 17.671 s
+	Dydis po kompresijos: 1759KB
+
+	Parameteras: 16
+--------------------------------
+	Uzkoduota per: 9.464 s
+	Dekoduota per: 12.182 s
+	Dydis po kompresijos: 1435KB
+
+biggest.bmp
+Dydis 14401KB
+
+      Parameteras: 16
+--------------------------------
+	Uzkoduota per: 29.017 s
+	Dekoduota per: 68.634 s
+	Dydis po kompresijos: 10659KB
+
+
+	
