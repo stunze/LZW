@@ -40,22 +40,22 @@ class BitReader(object):
 
 class LZWDecoding:
 
-    def __init__(self):
+    def __init__(self, encoded_path):
         """
-        :param path: file path to compress
+        :param encoded_path: file path to compress
         """
         self.reverse_lzw_mapping = INT_TO_ASCII.copy()  # key = dictionary length
         self.rev_keys = len(INT_TO_ASCII)
+        self.encoded_path = encoded_path
 
-    def lzw_decompress(self, input_path, output_path):
+    def lzw_decompress(self, output_path):
         """
         decompress input_file
         :param output_path: file decompressed saved to filename
-        :param input_path: the file to decompress using lzw
         """
         # module_name = os.path.splitext(os.path.basename(__file__))[0]
         # bitIO = __import__(module_name)
-        with open(input_path, 'rb') as file, open(output_path, 'wb') as output:
+        with open(self.encoded_path, 'rb') as file, open(output_path, 'wb') as output:
             buffer = bitarray()
             buffer.frombytes(file.read())
             data = buffer.to01()
@@ -78,7 +78,7 @@ class LZWDecoding:
                     self.rev_keys = len(INT_TO_ASCII)
 
 
-                number = commons.number_of_bits(self.rev_keys + 1)
+                number = commons.number_of_bits(self.rev_keys + 1, 2**self.param)
 
                 key = int(allkeys[pos:pos + number], 2)  # read as many bits as encoded dynamically
                 keys.append(key)
