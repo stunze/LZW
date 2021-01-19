@@ -68,7 +68,7 @@ class LZWEncoding:
                 for byte in chunk:
                     new_word = word + byte.to_bytes(1, byteorder='big')
 
-                    if self.n_keys == 2**self.param:
+                    if self.n_keys == 2**self.param and self.param != 8:
                         self.keys = ASCII_TO_INT.copy()  # key = bytes
                         self.n_keys = len(ASCII_TO_INT)  # length of dictionary
 

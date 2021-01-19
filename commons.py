@@ -21,7 +21,7 @@ def yield_from_file(path_to_file):
     """Returns a chunk of bytes from a file"""
     with open(path_to_file, "rb") as stream:
         while True:
-            data = stream.read(1)
+            data = stream.read(chunk_size)
             if data:
                 yield data
             else:
