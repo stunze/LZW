@@ -3,8 +3,8 @@ import math
 chunk_size = 1024
 
 
-def number_of_bits(k):
-    return int(math.log2(k)+1)
+def number_of_bits(k, max_size):
+    return int(math.log2(max_size + k)+1)
 
 
 def yield_bytes_from_stream(stream):
