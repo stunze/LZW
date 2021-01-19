@@ -1,5 +1,5 @@
 
-#### flowers.bmp 5000 kb
+### flowers.bmp 5000 kb
 
 ##### Parametras: 13
  - Užkodavimas: **9.8 s**
