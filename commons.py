@@ -4,7 +4,7 @@ chunk_size = 1024
 
 
 def number_of_bits(k):
-    return int(math.log2(256+k))
+    return int(math.log2(k)+1)
 
 
 def yield_bytes_from_stream(stream):

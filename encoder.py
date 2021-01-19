@@ -1,43 +1,10 @@
 import os
 import commons
+from bitarray import bitarray
 
 ASCII_TO_INT: dict = {i.to_bytes(1, 'big'): i for i in range(256)}  # for encoding
 
 
-class BitWriter(object):
-    def __init__(self, f):
-        self.accumulator = 0
-        self.bcount = 0
-        self.out = f
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.flush()
-
-    def __del__(self):
-        try:
-            self.flush()
-        except ValueError:  # I/O operation on closed file.
-            pass
-
-    def _writebit(self, bit):
-        if self.bcount == 8:
-            self.flush()
-        if bit > 0:
-            self.accumulator |= 1 << 7 - self.bcount
-        self.bcount += 1
-
-    def writebits(self, bits, n):
-        while n > 0:
-            self._writebit(bits & 1 << n - 1)
-            n -= 1
-
-    def flush(self):
-        self.out.write(bytearray([self.accumulator]))
-        self.accumulator = 0
-        self.bcount = 0
 
 
 class LZWEncoding:
@@ -58,32 +25,49 @@ class LZWEncoding:
         """
         filename, file_extension = os.path.splitext(self.path)
         output_path = filename + ".lzw"
-        module_name = os.path.splitext(os.path.basename(__file__))[0]
-        bitIO = __import__(module_name)
         data = commons.yield_from_file(self.path)
+        dec = bitarray()
         word = b''
-        with open(output_path, 'wb') as output, bitIO.BitWriter(output) as writer:
-            writer.writebits(self.param, 8)
+        prev = 9
+        gt = 0
+        keys = []
+        with open(output_path, 'wb') as output:
+            dec.extend(bin(self.param)[2:].zfill(8))
             for chunk in data:
                 for byte in chunk:
-                    new_word = word + byte.to_bytes(1, byteorder='big')
 
-                    if self.n_keys == 2**self.param and self.param != 8:
+                    new_word = word + byte.to_bytes(1, byteorder='big')
+                    if self.n_keys == (2**self.param-1) and self.param != 8:
                         self.keys = ASCII_TO_INT.copy()  # key = bytes
                         self.n_keys = len(ASCII_TO_INT)  # length of dictionary
+                        if gt == 0:
+                            print(keys[-5:])
+                            gt = 1
 
                     if new_word in self.keys:
                         word = new_word
                     else:
+
                         number_of_bits = commons.number_of_bits(self.n_keys)
-                        writer.writebits(self.keys[word], number_of_bits)
+                        dec.extend(bin(self.keys[word])[2:].zfill(number_of_bits))
+                        keys.append(self.keys[word])
+                        if prev < number_of_bits:
+                            print(keys[-5:])
+                            prev = number_of_bits
                         self.keys[new_word] = self.n_keys
                         self.n_keys += 1
                         word = byte.to_bytes(1, byteorder='big')
 
+
             if word in self.keys:  # for last string
                 number_of_bits = commons.number_of_bits(self.n_keys)
-                writer.writebits(self.keys[word], number_of_bits)
+                dec.extend(bin(self.keys[word])[2:].zfill(number_of_bits))
+
+            p = 8 - (len(dec)+3)%8
+            padding = f'{p:08b}'[-3:] + p*'0'
+            temp = bitarray(padding)
+            temp.extend(dec)
+            temp.tofile(output)
 
         print("LZW Compressed")
         return output_path

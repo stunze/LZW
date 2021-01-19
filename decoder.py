@@ -1,5 +1,6 @@
 import os
 import commons
+from bitarray import bitarray
 from encoder import ASCII_TO_INT
 
 INT_TO_ASCII: dict = {i: b for b, i in ASCII_TO_INT.items()}  # for decoding
@@ -39,11 +40,10 @@ class BitReader(object):
 
 class LZWDecoding:
 
-    def __init__(self, path):
+    def __init__(self):
         """
         :param path: file path to compress
         """
-        self.path = path
         self.reverse_lzw_mapping = INT_TO_ASCII.copy()  # key = dictionary length
         self.rev_keys = len(INT_TO_ASCII)
 
@@ -53,22 +53,38 @@ class LZWDecoding:
         :param output_path: file decompressed saved to filename
         :param input_path: the file to decompress using lzw
         """
-        module_name = os.path.splitext(os.path.basename(__file__))[0]
-        bitIO = __import__(module_name)
-        with open(input_path, 'rb') as file, open(output_path, 'wb') as output, bitIO.BitReader(file) as reader:
-            self.param = ord(file.read(1))
-            previous = -1
+        # module_name = os.path.splitext(os.path.basename(__file__))[0]
+        # bitIO = __import__(module_name)
+        with open(input_path, 'rb') as file, open(output_path, 'wb') as output:
+            buffer = bitarray()
+            buffer.frombytes(file.read())
+            data = buffer.to01()
+            # print("param", self.param)
+            # print("raktai", len(allkeys))
+            # print(padding)
+            padding = int(data[:3], 2)
+            data = data[3 + padding:]
+            self.param = int(data[:8], 2)
+            allkeys = data[8:]
             decoded_text = bytearray()
+            previous = -1
+            pos = 0
+            p = 9
+            keys = []
             while True:
 
-                number = commons.number_of_bits(self.rev_keys)
-                key = reader.readbits(number)  # read as many bits as encoded dynamically
-                if not reader.read:  # if end of file
-                    break
-
-                if self.rev_keys == 2 ** self.param and self.param != 8:  # init dictionary
+                if self.rev_keys == (2 ** self.param-1) and self.param != 8:  # init dictionary
                     self.reverse_lzw_mapping = INT_TO_ASCII.copy()
                     self.rev_keys = len(INT_TO_ASCII)
+
+
+                number = commons.number_of_bits(self.rev_keys + 1)
+
+                key = int(allkeys[pos:pos + number], 2)  # read as many bits as encoded dynamically
+                keys.append(key)
+                if p < number:
+                    print(keys[-5:])
+                    p = number
 
                 if previous == -1:
                     previous = key
@@ -81,6 +97,9 @@ class LZWDecoding:
                     self.rev_keys += 1
                     previous = key
                 decoded_text.extend(self.reverse_lzw_mapping[key])
+                pos += number
+                if pos == len(allkeys):
+                    break
 
             output.write(decoded_text)  # write to file
             print("LZW Decompressed")
