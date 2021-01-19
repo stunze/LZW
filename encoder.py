@@ -48,7 +48,7 @@ class LZWEncoding:
                         word = new_word
                     else:
 
-                        number_of_bits = commons.number_of_bits(self.n_keys)
+                        number_of_bits = commons.number_of_bits(self.n_keys, 2**self.param)
                         dec.extend(bin(self.keys[word])[2:].zfill(number_of_bits))
                         keys.append(self.keys[word])
                         if prev < number_of_bits:
@@ -60,7 +60,7 @@ class LZWEncoding:
 
 
             if word in self.keys:  # for last string
-                number_of_bits = commons.number_of_bits(self.n_keys)
+                number_of_bits = commons.number_of_bits(self.n_keys, 2**self.param)
                 dec.extend(bin(self.keys[word])[2:].zfill(number_of_bits))
 
             p = 8 - (len(dec)+3)%8
