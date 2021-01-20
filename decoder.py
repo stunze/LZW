@@ -1,41 +1,10 @@
-import os
+
 import commons
 from bitarray import bitarray
 from encoder import ASCII_TO_INT
 
 INT_TO_ASCII: dict = {i: b for b, i in ASCII_TO_INT.items()}  # for decoding
 
-
-class BitReader(object):
-    def __init__(self, f):
-        self.input = f
-        self.accumulator = 0
-        self.bcount = 0
-        self.read = 0
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
-
-    def _readbit(self):
-        if not self.bcount:
-            a = self.input.read(1)
-            if a:
-                self.accumulator = ord(a)
-            self.bcount = 8
-            self.read = len(a)
-        rv = (self.accumulator & (1 << self.bcount - 1)) >> self.bcount - 1
-        self.bcount -= 1
-        return rv
-
-    def readbits(self, n):
-        v = 0
-        while n > 0:
-            v = (v << 1) | self._readbit()
-            n -= 1
-        return v
 
 
 class LZWDecoding:
@@ -53,15 +22,11 @@ class LZWDecoding:
         decompress input_file
         :param output_path: file decompressed saved to filename
         """
-        # module_name = os.path.splitext(os.path.basename(__file__))[0]
-        # bitIO = __import__(module_name)
+
         with open(self.encoded_path, 'rb') as file, open(output_path, 'wb') as output:
             buffer = bitarray()
             buffer.frombytes(file.read())
             data = buffer.to01()
-            # print("param", self.param)
-            # print("raktai", len(allkeys))
-            # print(padding)
             padding = int(data[:3], 2)
             data = data[3 + padding:]
             self.param = int(data[:8], 2)
@@ -69,7 +34,6 @@ class LZWDecoding:
             decoded_text = bytearray()
             previous = -1
             pos = 0
-            p = 9
             keys = []
             while True:
 
@@ -82,9 +46,6 @@ class LZWDecoding:
 
                 key = int(allkeys[pos:pos + number], 2)  # read as many bits as encoded dynamically
                 keys.append(key)
-                if p < number:
-                    print(keys[-5:])
-                    p = number
 
                 if previous == -1:
                     previous = key

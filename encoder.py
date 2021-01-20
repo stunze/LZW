@@ -29,8 +29,7 @@ class LZWEncoding:
         dec = bitarray()
         word = b''
         prev = 9
-        gt = 0
-        keys = []
+
         with open(output_path, 'wb') as output:
             dec.extend(bin(self.param)[2:].zfill(8))
             for chunk in data:
@@ -40,9 +39,6 @@ class LZWEncoding:
                     if self.n_keys == (2**self.param-1) and self.param != 8:
                         self.keys = ASCII_TO_INT.copy()  # key = bytes
                         self.n_keys = len(ASCII_TO_INT)  # length of dictionary
-                        if gt == 0:
-                            print(keys[-5:])
-                            gt = 1
 
                     if new_word in self.keys:
                         word = new_word
@@ -50,10 +46,6 @@ class LZWEncoding:
 
                         number_of_bits = commons.number_of_bits(self.n_keys, 2**self.param)
                         dec.extend(bin(self.keys[word])[2:].zfill(number_of_bits))
-                        keys.append(self.keys[word])
-                        if prev < number_of_bits:
-                            print(keys[-5:])
-                            prev = number_of_bits
                         self.keys[new_word] = self.n_keys
                         self.n_keys += 1
                         word = byte.to_bytes(1, byteorder='big')
